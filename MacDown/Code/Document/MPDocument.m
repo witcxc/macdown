@@ -1221,6 +1221,11 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     [self.editor toggleForMarkupPrefix:@"`" suffix:@"`"];
 }
 
+- (IBAction)toggleCodeBlock:(id)sender
+{
+    [self.editor toggleForMarkupPrefix:@"\n```\n" suffix:@"\n```"];
+}
+
 - (IBAction)toggleStrikethrough:(id)sender
 {
     [self.editor toggleForMarkupPrefix:@"~~" suffix:@"~~"];
@@ -1234,6 +1239,11 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 - (IBAction)toggleHighlight:(id)sender
 {
     [self.editor toggleForMarkupPrefix:@"==" suffix:@"=="];
+}
+
+- (IBAction)toggleMarkRed:(id)sender
+{
+    [self.editor toggleForMarkupPrefix:@"<font color=red >" suffix:@"</font>"];
 }
 
 - (IBAction)toggleComment:(id)sender
@@ -1288,6 +1298,63 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 - (IBAction)unindent:(id)sender
 {
     [self.editor unindentSelectedLines];
+}
+
+- (IBAction)makeTable:(id)sender
+{
+    NSRange range = self.editor.selectedRange;
+    NSUInteger location = range.location;
+    NSUInteger length = range.length;
+    NSString *content = self.editor.string;
+    NSString *slectString = [content substringWithRange:NSMakeRange(location,length)];
+    NSString *tmp = @"";
+
+    NSUInteger nlMark = 0;
+    NSUInteger colCount = 0;
+      NSUInteger firstChar = 0;
+    NSUInteger firstEmp = 0;
+
+    for (NSInteger charIdx=0; charIdx<slectString.length; charIdx++)
+    {
+        // Do something with character at index charIdx, for example:
+        if ( [slectString characterAtIndex:charIdx] == '\n'){
+            firstChar = 0;
+        }
+        if ( [slectString characterAtIndex:charIdx] == '\n' && nlMark == 0){
+            if (colCount == 1){
+                colCount +=1;
+            }
+            tmp =[NSString stringWithFormat:@"%@\n|", tmp];
+            for (NSInteger i = 0;i<colCount;i++){
+                tmp =[NSString stringWithFormat:@"%@----|", tmp];
+            }
+            nlMark = 1;
+            firstChar = 0;
+        }
+        if ( [slectString characterAtIndex:charIdx] != ' ' && [slectString characterAtIndex:charIdx] != '\n')
+        {
+            firstEmp = 0;
+            if (firstChar == 0){
+                firstChar = 1;
+                colCount += 1;
+
+                tmp =[NSString stringWithFormat:@"%@|%C", tmp, [slectString characterAtIndex:charIdx]];
+            }else{
+                tmp =[NSString stringWithFormat:@"%@%C", tmp, [slectString characterAtIndex:charIdx]];
+            }
+
+        }else{
+            
+            firstChar = 0;
+            if(firstEmp == 0){
+                firstEmp = 1;
+            }
+            tmp =[NSString stringWithFormat:@"%@%C", tmp, [slectString characterAtIndex:charIdx]];
+        }
+    }
+
+    NSString *finString = [NSString stringWithFormat:@"%@\n\n%@\n", slectString, tmp];
+    [self.editor insertText:finString];
 }
 
 - (IBAction)insertNewParagraph:(id)sender

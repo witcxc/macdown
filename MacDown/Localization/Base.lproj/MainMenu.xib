@@ -1,8 +1,8 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="9532" systemVersion="15D21" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="11762" systemVersion="16B2657" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="9532"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="11762"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="NSApplication">
@@ -465,9 +465,24 @@
                                     <action selector="toggleInlineCode:" target="-1" id="XJO-7P-4Nh"/>
                                 </connections>
                             </menuItem>
+                            <menuItem title="Code Block" keyEquivalent="l" id="8DK-uY-0fb">
+                                <connections>
+                                    <action selector="toggleCodeBlock:" target="-1" id="uSs-Zm-tEX"/>
+                                </connections>
+                            </menuItem>
                             <menuItem title="Comment" keyEquivalent="/" id="i8c-gf-w29">
                                 <connections>
                                     <action selector="toggleComment:" target="-1" id="7Xw-6O-ibS"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Make Table" keyEquivalent="t" id="1qa-L6-hw9">
+                                <connections>
+                                    <action selector="makeTable:" target="-1" id="Uo8-ww-kZe"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Mark Red" keyEquivalent="." id="LU0-7c-ehe">
+                                <connections>
+                                    <action selector="toggleMarkRed:" target="-1" id="YvD-bG-ReT"/>
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="kPi-GI-e6G"/>
