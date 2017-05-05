@@ -920,6 +920,15 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 {
     return self.preferences.htmlSyntaxHighlighting;
 }
+- (BOOL)rendererHasMermaid:(MPRenderer *)renderer
+{
+    return self.preferences.htmlMermaid;
+}
+
+- (BOOL)rendererHasGraphviz:(MPRenderer *)renderer
+{
+    return self.preferences.htmlGraphviz;
+}
 
 - (MPCodeBlockAccessoryType)rendererCodeBlockAccesory:(MPRenderer *)renderer
 {
