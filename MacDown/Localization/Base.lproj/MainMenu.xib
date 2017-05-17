@@ -96,6 +96,9 @@
                                     </items>
                                 </menu>
                             </menuItem>
+                            <menuItem title="Open Quickly" id="l3R-14-5rq">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                            </menuItem>
                             <menuItem isSeparatorItem="YES" id="m54-Is-iLE"/>
                             <menuItem title="Close" keyEquivalent="w" id="DVo-aG-piG">
                                 <connections>

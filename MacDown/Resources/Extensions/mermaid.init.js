@@ -19,12 +19,12 @@
     dom = dom.parentElement;
     if (dom.tagName === "PRE") {
       dom = dom.parentElement;
+      var insertSvg = function(svgCode, bindFunctions){
+        dom.innerHTML = svgCode;
+      };
+      var graph = mermaidAPI.render('graphDiv' + i, graphSource, insertSvg)
     }
- 
-    var insertSvg = function(svgCode, bindFunctions){
-      dom.innerHTML = svgCode;
-    };
-    var graph = mermaidAPI.render('graphDiv' + i, graphSource, insertSvg)
+
     }
   };
  

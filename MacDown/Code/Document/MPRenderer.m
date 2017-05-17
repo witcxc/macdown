@@ -637,6 +637,7 @@ NS_INLINE void MPFreeHTMLRenderer(hoedown_renderer *htmlRenderer)
     NSString *html = MPGetHTML(
         title, self.currentHtml, self.stylesheets, MPAssetFullLink,
         self.scripts, MPAssetFullLink);
+    NSLog(@"%@", html);
     [delegate renderer:self didProduceHTMLOutput:html];
 
     self.styleName = [delegate rendererStyleName:self];

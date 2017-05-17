@@ -17,8 +17,8 @@
       dom = dom.parentElement;
       if (dom.tagName === "PRE") {
         dom = dom.parentElement;
+        dom.innerHTML = Viz(graphSource, { engine: engine});
       }
-      dom.innerHTML = Viz(graphSource, { engine: engine});
     }
   }
  
