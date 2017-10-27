@@ -1340,7 +1340,7 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
             nlMark = 1;
             firstChar = 0;
         }
-        if ( [slectString characterAtIndex:charIdx] != ' ' && [slectString characterAtIndex:charIdx] != '\n')
+        if (( [slectString characterAtIndex:charIdx] != ' '&&[slectString characterAtIndex:charIdx] != '\t') && [slectString characterAtIndex:charIdx] != '\n')
         {
             firstEmp = 0;
             if (firstChar == 0){
