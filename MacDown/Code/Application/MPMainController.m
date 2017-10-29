@@ -18,6 +18,8 @@
 #import "MPMarkdownPreferencesViewController.h"
 #import "MPEditorPreferencesViewController.h"
 #import "MPHtmlPreferencesViewController.h"
+#import "MPTerminalPreferencesViewController.h"
+#import "MPDocument.h"
 
 
 static NSString * const kMPTreatLastSeenStampKey = @"treatLastSeenStamp";
@@ -98,7 +100,26 @@ NS_INLINE void treat()
 
 @synthesize preferencesWindowController = _preferencesWindowController;
 
-- (MPPreferences *)prefereces
+- (void)applicationDidFinishLaunching:(NSNotification *)notification
+{
+    // Using private API [WebCache setDisabled:YES] to disable WebView's cache
+    id webCacheClass = (id)NSClassFromString(@"WebCache");
+    if (webCacheClass) {
+// Ignoring "undeclared selector" warning
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wundeclared-selector"
+        BOOL setDisabledValue = YES;
+        NSMethodSignature *signature = [webCacheClass methodSignatureForSelector:@selector(setDisabled:)];
+        NSInvocation *invocation = [NSInvocation invocationWithMethodSignature:signature];
+        invocation.selector = @selector(setDisabled:);
+        invocation.target = [webCacheClass class];
+        [invocation setArgument:&setDisabledValue atIndex:2];
+        [invocation invoke];
+#pragma clang diagnostic pop
+    }
+}
+
+- (MPPreferences *)preferences
 {
     return [MPPreferences sharedInstance];
 }
@@ -112,6 +133,7 @@ NS_INLINE void treat()
             [[MPMarkdownPreferencesViewController alloc] init],
             [[MPEditorPreferencesViewController alloc] init],
             [[MPHtmlPreferencesViewController alloc] init],
+            [[MPTerminalPreferencesViewController alloc] init],
         ];
         NSString *title = NSLocalizedString(@"Preferences",
                                             @"Preferences window title.");
@@ -145,7 +167,7 @@ NS_INLINE void treat()
     NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
     [center addObserver:self selector:@selector(showFirstLaunchTips)
                    name:MPDidDetectFreshInstallationNotification
-                 object:self.prefereces];
+                 object:self.preferences];
     [self copyFiles];
     return self;
 }
@@ -155,14 +177,16 @@ NS_INLINE void treat()
 
 - (BOOL)applicationShouldOpenUntitledFile:(NSApplication *)sender
 {
-    if (self.prefereces.filesToOpen.count)
+    if (self.preferences.filesToOpen.count || self.preferences.pipedContentFileToOpen)
         return NO;
-    return !self.prefereces.supressesUntitledDocumentOnLaunch;
+    return !self.preferences.supressesUntitledDocumentOnLaunch;
 }
 
 - (void)applicationDidBecomeActive:(NSNotification *)notification
 {
+    [self openPendingPipedContent];
     [self openPendingFiles];
+    treat();
 }
 
 
@@ -170,7 +194,7 @@ NS_INLINE void treat()
 
 - (NSString *)feedURLStringForUpdater:(SUUpdater *)updater
 {
-    if (self.prefereces.updateIncludesPreReleases)
+    if (self.preferences.updateIncludesPreReleases)
         return [NSBundle mainBundle].infoDictionary[@"SUBetaFeedURL"];
     return [NSBundle mainBundle].infoDictionary[@"SUFeedURL"];
 }
@@ -219,7 +243,7 @@ NS_INLINE void treat()
 {
     NSDocumentController *c = [NSDocumentController sharedDocumentController];
 
-    for (NSString *path in self.prefereces.filesToOpen)
+    for (NSString *path in self.preferences.filesToOpen)
     {
         NSURL *url = [NSURL fileURLWithPath:path];
         if ([url checkResourceIsReachableAndReturnError:NULL])
@@ -229,13 +253,32 @@ NS_INLINE void treat()
         }
         else
         {
-            [c openUntitledDocumentForURL:url display:YES error:NULL];
+            [c createNewEmptyDocumentForURL:url display:YES error:NULL];
         }
     }
 
-    self.prefereces.filesToOpen = nil;
-    [self.prefereces synchronize];
-    treat();
+    self.preferences.filesToOpen = nil;
+    [self.preferences synchronize];
+}
+
+- (void)openPendingPipedContent {
+    NSDocumentController *c = [NSDocumentController sharedDocumentController];
+    
+    if (self.preferences.pipedContentFileToOpen) {
+        NSURL *pipedContentFileToOpenURL = [NSURL fileURLWithPath:self.preferences.pipedContentFileToOpen];
+        NSError *readPipedContentError;
+        NSString *pipedContentString = [NSString stringWithContentsOfURL:pipedContentFileToOpenURL encoding:NSUTF8StringEncoding error:&readPipedContentError];
+        
+        NSError *openDocumentError;
+        MPDocument *document = (MPDocument *)[c openUntitledDocumentAndDisplay:YES error:&openDocumentError];
+        
+        if (document && openDocumentError == nil && readPipedContentError == nil) {
+            document.markdown = pipedContentString;
+        }
+        
+        self.preferences.pipedContentFileToOpen = nil;
+        [self.preferences synchronize];
+    }
 }
 
 

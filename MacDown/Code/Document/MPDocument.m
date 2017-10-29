@@ -28,6 +28,7 @@
 #import "MPExportPanelAccessoryViewController.h"
 #import "MPMathJaxListener.h"
 #import "WebView+WebViewPrivateHeaders.h"
+#import "MPToolbarController.h"
 
 
 static NSString * const kMPDefaultAutosaveName = @"Untitled";
@@ -181,12 +182,14 @@ typedef NS_ENUM(NSUInteger, MPWordCountType) {
     MPWordCountTypeCharacterNoSpaces,
 };
 
+@property (weak) IBOutlet NSToolbar *toolbar;
 @property (weak) IBOutlet MPDocumentSplitView *splitView;
 @property (weak) IBOutlet NSView *editorContainer;
 @property (unsafe_unretained) IBOutlet MPEditorView *editor;
 @property (weak) IBOutlet NSLayoutConstraint *editorPaddingBottom;
 @property (weak) IBOutlet WebView *preview;
 @property (weak) IBOutlet NSPopUpButton *wordCountWidget;
+@property (strong) IBOutlet MPToolbarController *toolbarController;
 @property (copy, nonatomic) NSString *autosaveName;
 @property (strong) HGMarkdownHighlighter *highlighter;
 @property (strong) MPRenderer *renderer;
@@ -197,8 +200,6 @@ typedef NS_ENUM(NSUInteger, MPWordCountType) {
 @property BOOL shouldHandleBoundsChange;
 @property BOOL isPreviewReady;
 @property (strong) NSURL *currentBaseUrl;
-@property (readonly) BOOL previewVisible;
-@property (readonly) BOOL editorVisible;
 @property CGFloat lastPreviewScrollTop;
 @property (nonatomic, readonly) BOOL needsHtml;
 @property (nonatomic) NSUInteger totalWords;
@@ -267,6 +268,11 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     return self.renderer.currentHtml;
 }
 
+- (BOOL)toolbarVisible
+{
+    return self.windowForSheet.toolbar.visible;
+}
+
 - (BOOL)previewVisible
 {
     return (self.preview.frame.size.width != 0.0);
@@ -333,6 +339,7 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     self.isPreviewReady = NO;
     self.shouldHandleBoundsChange = YES;
     self.previousSplitRatio = -1.0;
+    
     return self;
 }
 
@@ -559,7 +566,26 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
             savePanel.nameFieldStringValue = fileName;
         }
     }
-    savePanel.allowedFileTypes = nil;   // Allow all extensions.
+    
+    // Get supported extensions from plist
+    static NSMutableArray *supportedExtensions = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        supportedExtensions = [NSMutableArray array];
+        NSDictionary *infoDict = [NSBundle mainBundle].infoDictionary;
+        for (NSDictionary *docType in infoDict[@"CFBundleDocumentTypes"])
+        {
+            NSArray *exts = docType[@"CFBundleTypeExtensions"];
+            if (exts.count)
+            {
+                [supportedExtensions addObjectsFromArray:exts];
+            }
+        }
+    });
+    
+    savePanel.allowedFileTypes = supportedExtensions;
+    savePanel.allowsOtherFileTypes = YES; // Allow all extensions.
+    
     return [super prepareSavePanel:savePanel];
 }
 
@@ -614,7 +640,16 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 {
     BOOL result = [super validateUserInterfaceItem:item];
     SEL action = item.action;
-    if (action == @selector(togglePreviewPane:))
+    if (action == @selector(toggleToolbar:))
+    {
+        NSMenuItem *it = ((NSMenuItem *)item);
+        it.title = self.toolbarVisible ?
+            NSLocalizedString(@"Hide toolbar",
+                              @"Toggle reveal toolbar") :
+            NSLocalizedString(@"Show toolbar",
+                              @"Toggle reveal toolbar");
+    }
+    else if (action == @selector(togglePreviewPane:))
     {
         NSMenuItem *it = ((NSMenuItem *)item);
         it.hidden = (!self.previewVisible && self.previousSplitRatio < 0.0);
@@ -1399,36 +1434,19 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     [self setSplitViewDividerLocation:0.5];
 }
 
+- (IBAction)toggleToolbar:(id)sender
+{
+    [self.windowForSheet toggleToolbarShown:sender];
+}
+
 - (IBAction)togglePreviewPane:(id)sender
 {
-    if (self.previewVisible)
-    {
-        self.previousSplitRatio = self.splitView.dividerLocation;
-        BOOL editorOnRight = self.preferences.editorOnRight;
-        [self setSplitViewDividerLocation:(editorOnRight ? 0.0 : 1.0)];
-    }
-    else
-    {
-        if (self.previousSplitRatio >= 0.0)
-            [self setSplitViewDividerLocation:self.previousSplitRatio];
-    }
+    [self toggleSplitterCollapsingEditorPane:NO];
 }
 
 - (IBAction)toggleEditorPane:(id)sender
 {
-    if (self.editorVisible)
-    {
-        self.previousSplitRatio = self.splitView.dividerLocation;
-        if (self.preferences.editorOnRight)
-            [self setSplitViewDividerLocation:1.0];
-        else
-            [self setSplitViewDividerLocation:0.0];
-    }
-    else
-    {
-        if (self.previousSplitRatio >= 0.0)
-            [self setSplitViewDividerLocation:self.previousSplitRatio];
-    }
+    [self toggleSplitterCollapsingEditorPane:YES];
 }
 
 - (IBAction)render:(id)sender
@@ -1438,6 +1456,36 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
 
 #pragma mark - Private
+
+- (void)toggleSplitterCollapsingEditorPane:(BOOL)forEditorPane
+{
+    BOOL isVisible = forEditorPane ? self.editorVisible : self.previewVisible;
+    BOOL editorOnRight = self.preferences.editorOnRight;
+
+    float targetRatio = ((forEditorPane == editorOnRight) ? 1.0 : 0.0);
+
+    if (isVisible)
+    {
+        CGFloat oldRatio = self.splitView.dividerLocation;
+        if (oldRatio != 0.0 && oldRatio != 1.0)
+        {
+            // We don't want to save these values, since they are meaningless.
+            // The user should be able to switch between 100% editor and 100%
+            // preview without losing the old ratio.
+            self.previousSplitRatio = oldRatio;
+        }
+        [self setSplitViewDividerLocation:targetRatio];
+    }
+    else
+    {
+        // We have an inconsistency here, let's just go back to 0.5,
+        // otherwise nothing will happen
+        if (self.previousSplitRatio < 0.0)
+            self.previousSplitRatio = 0.5;
+
+        [self setSplitViewDividerLocation:self.previousSplitRatio];
+    }
+}
 
 - (void)setupEditor:(NSString *)changedKey
 {
@@ -1712,37 +1760,76 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     return mine == theirs || [mine isEqualToString:theirs];
 }
 
+
+#define OPEN_FAIL_ALERT_INFORMATIVE NSLocalizedString( \
+@"Please check the path of your link is correct. Turn on \
+“Automatically create link targets” If you want MacDown to \
+create nonexistent link targets for you.", \
+@"preview navigation error information")
+
+#define AUTO_CREATE_FAIL_ALERT_INFORMATIVE NSLocalizedString( \
+@"MacDown can’t create a file for the clicked link because \
+the current file is not saved anywhere yet. Save the \
+current file somewhere to enable this feature.", \
+@"preview navigation error information")
+
+
 - (void)openOrCreateFileForUrl:(NSURL *)url
 {
-    // If the URL points to a nonexistent file, create automatically if
-    // requested, or provide better error message.
-    if (url.isFileURL && ![url checkResourceIsReachableAndReturnError:NULL])
+    // Simply open the file if it is not local, or exists already.
+    if (!url.isFileURL || [url checkResourceIsReachableAndReturnError:NULL])
     {
-        if (self.preferences.createFileForLinkTarget)
-        {
-            NSDocumentController *controller =
-                [NSDocumentController sharedDocumentController];
-            [controller openUntitledDocumentForURL:url display:YES error:NULL];
-            return;
-        }
+        [[NSWorkspace sharedWorkspace] openURL:url];
+        return;
+    }
 
+    // Show an error if the user doesn't want us to create it automatically.
+    if (!self.preferences.createFileForLinkTarget)
+    {
         NSAlert *alert = [[NSAlert alloc] init];
         NSString *template = NSLocalizedString(
             @"File not found at path:\n%@",
             @"preview navigation error message");
         alert.messageText = [NSString stringWithFormat:template, url.path];
-        alert.informativeText = NSLocalizedString(
-            @"Please check the path of your link is correct. Turn on "
-            @"“Automatically create link targets” If you want MacDown to "
-            @"create nonexistent link targets for you.",
-            @"preview navigation error information");
+        alert.informativeText = OPEN_FAIL_ALERT_INFORMATIVE;
         [alert runModal];
         return;
     }
 
-    // Try to open it.
-    if ([[NSWorkspace sharedWorkspace] openURL:url])
-        return;
+    // We can only create a file if the current file is saved. (Why?)
+    if (!self.fileURL)
+    {
+        NSAlert *alert = [[NSAlert alloc] init];
+        NSString *template = NSLocalizedString(
+            @"Can’t create file:\n%@", @"preview navigation error message");
+        alert.messageText = [NSString stringWithFormat:template,
+                             url.lastPathComponent];
+        alert.informativeText = AUTO_CREATE_FAIL_ALERT_INFORMATIVE;
+        [alert runModal];
+    }
+
+    // Try to created the file.
+    NSDocumentController *controller =
+        [NSDocumentController sharedDocumentController];
+
+    NSError *error = nil;
+    id doc = [controller createNewEmptyDocumentForURL:url
+                                              display:YES error:&error];
+    if (!doc)
+    {
+        NSAlert *alert = [[NSAlert alloc] init];
+        NSString *template = NSLocalizedString(
+            @"Can’t create file:\n%@",
+            @"preview navigation error message");
+        alert.messageText =
+            [NSString stringWithFormat:template, url.lastPathComponent];
+        template = NSLocalizedString(
+            @"An error occurred while creating the file:\n%@",
+            @"preview navigation error information");
+        alert.informativeText =
+            [NSString stringWithFormat:template, error.localizedDescription];
+        [alert runModal];
+    }
 }
 
 

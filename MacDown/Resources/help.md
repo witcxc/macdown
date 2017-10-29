@@ -1,6 +1,6 @@
 # MacDown
 
-![MacDown logo](http://macdown.uranusjr.com/static/base/img/logo-160.png)
+![MacDown logo](http://macdown.uranusjr.com/static/images/logo-160.png)
 
 Hello there! I’m **MacDown**, the open source Markdown editor for OS X.
 
@@ -304,9 +304,6 @@ date: 2014-06-06 20:00:00
 
 ### Render newline literally
 Normally I require you to put two spaces and a newline (aka return) at the end of a line in order to create a line break. If you like, I can render a newline any time you end a line with a newline. However, if you enable this, markdown that looks lovely when I render it might look pretty funky when you let some *other* program render it.
-
-
-
 
 
 ## <a name="general-pane"></a>The General Preferences Pane

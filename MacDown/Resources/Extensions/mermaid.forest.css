@@ -334,7 +334,7 @@ svg .classLabel .label {
   stroke: #13540c;
   stroke-width: 1;
 }
-.node text {
+text {
   font-family: 'trebuchet ms', verdana, arial;
   font-size: 14px;
 }
