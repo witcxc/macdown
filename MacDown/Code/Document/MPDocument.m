@@ -1267,7 +1267,29 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
 - (IBAction)toggleCodeBlock:(id)sender
 {
-    [self.editor toggleForMarkupPrefix:@"\n```\n" suffix:@"\n```"];
+    NSRange range = self.editor.selectedRange;
+    NSUInteger location = range.location;
+    NSUInteger length = location;
+    NSString *content = self.editor.string;
+    NSString *slectString = [content substringWithRange:NSMakeRange(0,location)];
+
+    NSString *head = @"";
+    NSString *tail = @"";
+    NSString *tmp = @"";
+    for (NSInteger charIdx=0; charIdx<length; charIdx++)
+    {
+        // Do something with character at index charIdx, for example:
+        if ( [slectString characterAtIndex:(length - 1 - charIdx)] == '\n'){
+            break;
+        }
+        tmp =[NSString stringWithFormat:@"%@ ", tmp];
+    }
+    head =[NSString stringWithFormat:@"\n%@```bash\n", tmp];
+    tail =[NSString stringWithFormat:@"\n%@```", tmp];
+    [self.editor toggleForMarkupPrefix:head suffix:tail];
+    //[self.editor toggleForMarkupPrefix:@"\n```\n" suffix:@"\n```"];
+
+
 }
 
 - (IBAction)toggleStrikethrough:(id)sender
@@ -1342,6 +1364,17 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 - (IBAction)unindent:(id)sender
 {
     [self.editor unindentSelectedLines];
+}
+- (IBAction)centerText:(id)sender
+{
+    NSRange range = self.editor.selectedRange;
+    NSUInteger location = range.location;
+    NSUInteger length = range.length;
+    NSString *content = self.editor.string;
+    NSString *slectString = [content substringWithRange:NSMakeRange(location,length)];
+
+    NSString *finString = [NSString stringWithFormat:@"<center>\n%@\n</center>", slectString];
+    [self.editor insertText:finString];
 }
 
 - (IBAction)makeTable:(id)sender

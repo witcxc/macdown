@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="11542" systemVersion="16C67" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="11762" systemVersion="16G29" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="11542"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="11762"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="NSApplication">
@@ -492,6 +492,11 @@
                             <menuItem title="Mark Red" keyEquivalent="." id="LU0-7c-ehe">
                                 <connections>
                                     <action selector="toggleMarkRed:" target="-1" id="YvD-bG-ReT"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="CenterText" keyEquivalent="'" id="fKf-7I-GW7">
+                                <connections>
+                                    <action selector="centerText:" target="-1" id="yP7-1y-YpI"/>
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="kPi-GI-e6G"/>
