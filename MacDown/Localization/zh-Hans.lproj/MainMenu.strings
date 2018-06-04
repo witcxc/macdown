@@ -2,7 +2,7 @@
 "0WP-T5-QxP.title" = "二级标题";
 
 /* Class = "NSMenuItem"; title = "MacDown"; ObjectID = "1Xt-HY-uBw"; */
-"1Xt-HY-uBw.title" = "MacDown";
+"1Xt-HY-uBw.title" = "MarkDown";
 
 /* Class = "NSMenu"; title = "Find"; ObjectID = "1b7-l0-nxx"; */
 "1b7-l0-nxx.title" = "查找";
@@ -20,7 +20,7 @@
 "5QF-Oa-p0T.title" = "编辑";
 
 /* Class = "NSMenuItem"; title = "About MacDown"; ObjectID = "5kV-Vb-QxS"; */
-"5kV-Vb-QxS.title" = "关于 MacDown";
+"5kV-Vb-QxS.title" = "关于 MarkDown";
 
 /* Class = "NSMenuItem"; title = "Export"; ObjectID = "5mp-ev-1el"; */
 "5mp-ev-1el.title" = "导出到";
@@ -185,7 +185,7 @@
 "ts7-v5-Htm.title" = "拷贝 HTML 代码";
 
 /* Class = "NSMenu"; title = "MacDown"; ObjectID = "uQy-DD-JDr"; */
-"uQy-DD-JDr.title" = "MacDown";
+"uQy-DD-JDr.title" = "MarkDown";
 
 /* Class = "NSMenuItem"; title = "Cut"; ObjectID = "uRl-iY-unG"; */
 "uRl-iY-unG.title" = "剪切";
